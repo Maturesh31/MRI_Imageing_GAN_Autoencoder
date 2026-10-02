@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large files and datasets
+database/
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Environments and IDE
+.env
+.venv
+env/
+venv/
+ENV/
+.vscode/
+.idea/
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
