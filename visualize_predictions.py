@@ -6,7 +6,7 @@ from config import Config
 from cnn_model import SimpleCNN
 from data_loader import get_or_create_split, ABIDEDataset
 
-def visualize_sample_predictions(num_samples=12, save_path=None):
+def visualize_sample_predictions(model_name="e1_best_model.pth", save_name="E1_sample_predictions.png", title="E1 GAN-Augmented Model - Sample Test Predictions", num_samples=12):
     device = Config.DEVICE
     print(f"[INFO] Using Device: {device}")
 
@@ -16,7 +16,7 @@ def visualize_sample_predictions(num_samples=12, save_path=None):
     test_labels = split_data["test_labels"]
 
     # 2. Load model
-    model_path = os.path.join(Config.RESULTS_DIR, "e0_best_model.pth")
+    model_path = os.path.join(Config.RESULTS_DIR, model_name)
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Model checkpoint not found at {model_path}")
 
@@ -93,15 +93,13 @@ def visualize_sample_predictions(num_samples=12, save_path=None):
     for j in range(num_samples, len(axes)):
         axes[j].axis("off")
 
-    plt.suptitle("E0 Baseline Model - Sample Test Predictions on Brain MRI Slices", fontsize=15, fontweight="bold", y=0.99)
+    plt.suptitle(title, fontsize=15, fontweight="bold", y=0.99)
     plt.tight_layout()
 
-    if save_path is None:
-        save_path = os.path.join(Config.RESULTS_DIR, "E0_sample_predictions.png")
-
+    save_path = os.path.join(Config.RESULTS_DIR, save_name)
     plt.savefig(save_path, dpi=200, bbox_inches="tight")
     plt.close()
     print(f"[SUCCESS] Visual predictions saved to: {save_path}")
 
 if __name__ == "__main__":
-    visualize_sample_predictions()
+    visualize_sample_predictions(model_name="e1_best_model.pth", save_name="E1_sample_predictions.png", title="E1 GAN-Augmented Model - Sample Test Predictions")

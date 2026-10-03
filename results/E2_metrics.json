@@ -1,0 +1,22 @@
+{
+    "accuracy": 0.6292,
+    "accuracy_pct": 62.92,
+    "precision": 0.5802,
+    "recall_sensitivity": 0.8019,
+    "specificity": 0.4721,
+    "f1_score": 0.6733,
+    "auc_roc": 0.6665,
+    "confusion_matrix": {
+        "TP": 170,
+        "TN": 110,
+        "FP": 123,
+        "FN": 42
+    },
+    "experiment": "E2_Autoencoder_Enhancement",
+    "ae_epochs": 6,
+    "cnn_epochs_trained": 15,
+    "train_samples": 1776,
+    "test_samples": 445,
+    "best_val_loss": 0.6559,
+    "training_time_seconds": 6449.68
+}

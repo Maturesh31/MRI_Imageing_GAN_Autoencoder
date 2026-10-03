@@ -1,0 +1,22 @@
+{
+    "accuracy": 0.5955,
+    "accuracy_pct": 59.55,
+    "precision": 0.5879,
+    "recall_sensitivity": 0.5047,
+    "specificity": 0.6781,
+    "f1_score": 0.5431,
+    "auc_roc": 0.6223,
+    "confusion_matrix": {
+        "TP": 107,
+        "TN": 158,
+        "FP": 75,
+        "FN": 105
+    },
+    "experiment": "E1_GAN_Augmentation",
+    "gan_epochs": 6,
+    "cnn_epochs_trained": 13,
+    "synthetic_samples_added": 400,
+    "total_train_samples": 2176,
+    "best_val_loss": 0.6795,
+    "training_time_seconds": 38107.11
+}
