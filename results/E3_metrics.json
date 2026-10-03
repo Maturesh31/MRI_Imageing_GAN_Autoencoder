@@ -1,0 +1,21 @@
+{
+    "accuracy": 0.6112,
+    "accuracy_pct": 61.12,
+    "precision": 0.6089,
+    "recall_sensitivity": 0.5142,
+    "specificity": 0.6996,
+    "f1_score": 0.5575,
+    "auc_roc": 0.6129,
+    "confusion_matrix": {
+        "TP": 109,
+        "TN": 163,
+        "FP": 70,
+        "FN": 103
+    },
+    "experiment": "E3_Combined_AE_GAN",
+    "cnn_epochs_trained": 15,
+    "synthetic_samples_added": 400,
+    "total_train_samples": 2176,
+    "best_val_loss": 0.685,
+    "training_time_seconds": 2296.53
+}
