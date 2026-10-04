@@ -6,18 +6,27 @@ import nibabel as nib
 import torch
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
+import torchvision.transforms as T
 from config import Config
+
+# Data augmentation for training slices
+train_transforms = T.Compose([
+    T.RandomHorizontalFlip(p=0.5),
+    T.RandomRotation(degrees=10),
+    T.RandomAffine(degrees=0, translate=(0.04, 0.04), scale=(0.96, 1.04)),
+])
 
 class ABIDEDataset(Dataset):
     """
     ABIDE Dataset for 2D sMRI slices.
     Applies per-slice min-max normalization to [0, 1].
-    Optional in-memory caching to eliminate disk I/O bottlenecks.
+    Optional in-memory caching and real-time training augmentation.
     """
-    def __init__(self, file_paths, labels, cache_in_memory=True):
+    def __init__(self, file_paths, labels, cache_in_memory=True, augment=False):
         self.file_paths = file_paths
         self.labels = labels
         self.cache_in_memory = cache_in_memory
+        self.augment = augment
         self.cached_images = {}
 
         if self.cache_in_memory:
@@ -58,6 +67,9 @@ class ABIDEDataset(Dataset):
             img = self.cached_images[idx]
         else:
             img = self._load_and_preprocess(self.file_paths[idx])
+
+        if self.augment:
+            img = train_transforms(img)
 
         label = torch.tensor(self.labels[idx], dtype=torch.float32)
         return img, label
@@ -191,12 +203,14 @@ def get_data_loaders(batch_size=Config.BATCH_SIZE, cache_in_memory=Config.CACHE_
     train_dataset = ABIDEDataset(
         file_paths=split_data["train_files"],
         labels=split_data["train_labels"],
-        cache_in_memory=cache_in_memory
+        cache_in_memory=cache_in_memory,
+        augment=True
     )
     test_dataset = ABIDEDataset(
         file_paths=split_data["test_files"],
         labels=split_data["test_labels"],
-        cache_in_memory=cache_in_memory
+        cache_in_memory=cache_in_memory,
+        augment=False
     )
 
     train_loader = DataLoader(

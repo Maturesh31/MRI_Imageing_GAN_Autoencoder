@@ -285,7 +285,8 @@ def run_e2(ae_epochs=6, cnn_epochs=15, batch_size=Config.BATCH_SIZE, lr=Config.L
     plot_training_curves(train_losses, val_losses, train_accs, val_accs, curves_path)
 
     cm_path = os.path.join(Config.RESULTS_DIR, "E2_confusion_matrix.png")
-    y_pred = (y_prob >= 0.5).astype(int)
+    thresh = metrics.get("threshold", 0.5)
+    y_pred = (y_prob >= thresh).astype(int)
     plot_confusion_matrix(y_true, y_pred, cm_path)
 
     roc_path = os.path.join(Config.RESULTS_DIR, "E2_roc_curve.png")

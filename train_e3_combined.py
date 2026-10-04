@@ -331,7 +331,8 @@ def run_e3(cnn_epochs=15, batch_size=Config.BATCH_SIZE, lr=Config.LEARNING_RATE,
     plot_training_curves(train_losses, val_losses, train_accs, val_accs, curves_path)
 
     cm_path = os.path.join(Config.RESULTS_DIR, "E3_confusion_matrix.png")
-    y_pred = (y_prob >= 0.5).astype(int)
+    thresh = metrics.get("threshold", 0.5)
+    y_pred = (y_prob >= thresh).astype(int)
     plot_confusion_matrix(y_true, y_pred, cm_path)
 
     roc_path = os.path.join(Config.RESULTS_DIR, "E3_roc_curve.png")

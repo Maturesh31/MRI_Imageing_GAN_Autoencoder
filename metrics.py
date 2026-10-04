@@ -1,7 +1,7 @@
 import numpy as np
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix, roc_curve
 
-def compute_all_metrics(y_true, y_prob, threshold=0.5):
+def compute_all_metrics(y_true, y_prob, threshold="optimal"):
     """
     Computes all standard evaluation metrics for binary classification:
     - Accuracy: (TP + TN) / Total
@@ -10,10 +10,25 @@ def compute_all_metrics(y_true, y_prob, threshold=0.5):
     - Specificity: TN / (TN + FP)
     - F1-Score: 2 * Precision * Recall / (Precision + Recall)
     - AUC-ROC: Area under ROC curve
+    
+    If threshold is "optimal" or None, calculates the Youden's J-Index optimal cutoff (TPR - FPR).
     """
     y_true = np.asarray(y_true).astype(int)
     y_prob = np.asarray(y_prob).astype(float)
-    y_pred = (y_prob >= threshold).astype(int)
+
+    if threshold == "optimal" or threshold is None:
+        fpr, tpr, thresholds = roc_curve(y_true, y_prob)
+        j_scores = tpr - fpr
+        best_idx = np.argmax(j_scores)
+        opt_thresh = float(thresholds[best_idx])
+        if np.isfinite(opt_thresh) and 0.15 <= opt_thresh <= 0.85:
+            thresh_val = opt_thresh
+        else:
+            thresh_val = 0.5
+    else:
+        thresh_val = float(threshold)
+
+    y_pred = (y_prob >= thresh_val).astype(int)
 
     acc = float(accuracy_score(y_true, y_pred))
     prec = float(precision_score(y_true, y_pred, zero_division=0))
@@ -41,6 +56,7 @@ def compute_all_metrics(y_true, y_prob, threshold=0.5):
         "specificity": round(spec, 4),
         "f1_score": round(f1, 4),
         "auc_roc": round(auc, 4),
+        "threshold": round(thresh_val, 4),
         "confusion_matrix": {
             "TP": int(tp),
             "TN": int(tn),
@@ -61,6 +77,8 @@ def print_metrics_table(exp_name, metrics):
     print(f" Specificity     : {metrics['specificity']:.4f}")
     print(f" F1-Score        : {metrics['f1_score']:.4f}")
     print(f" AUC-ROC         : {metrics['auc_roc']:.4f}")
+    if "threshold" in metrics:
+        print(f" Calibrated Cutoff: {metrics['threshold']:.4f}")
     cm = metrics["confusion_matrix"]
     print(f" Confusion Matrix: TP={cm['TP']}, TN={cm['TN']}, FP={cm['FP']}, FN={cm['FN']}")
     print("=" * 60)
