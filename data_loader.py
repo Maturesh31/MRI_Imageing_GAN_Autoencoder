@@ -62,34 +62,91 @@ class ABIDEDataset(Dataset):
         label = torch.tensor(self.labels[idx], dtype=torch.float32)
         return img, label
 
+def locate_dataset_dirs(base_data_dir=None):
+    """
+    Locates Autistic and Typical_Control directories containing .nii/.nii.gz files.
+    Searches base_data_dir, /kaggle/input, database/, and parent paths.
+    """
+    candidates = []
+    if base_data_dir:
+        candidates.append(base_data_dir)
+    candidates.extend([
+        Config.DATA_DIR,
+        "/kaggle/input",
+        "./database/ABIDE",
+        "./database/ABIDE/Combined Data",
+        "../database/ABIDE",
+        "."
+    ])
+
+    for root in candidates:
+        if not os.path.exists(root):
+            continue
+        # Direct check
+        a_dir = os.path.join(root, "Autistic")
+        c_dir = os.path.join(root, "Typical_Control")
+        if os.path.isdir(a_dir) and os.path.isdir(c_dir):
+            a_files = sorted(glob.glob(os.path.join(a_dir, "*.nii*")))
+            c_files = sorted(glob.glob(os.path.join(c_dir, "*.nii*")))
+            if len(a_files) > 0 and len(c_files) > 0:
+                return a_dir, c_dir, a_files, c_files
+
+        # Recursive check
+        for dirpath, dirnames, _ in os.walk(root):
+            if "Autistic" in dirnames and "Typical_Control" in dirnames:
+                a_dir = os.path.join(dirpath, "Autistic")
+                c_dir = os.path.join(dirpath, "Typical_Control")
+                a_files = sorted(glob.glob(os.path.join(a_dir, "*.nii*")))
+                c_files = sorted(glob.glob(os.path.join(c_dir, "*.nii*")))
+                if len(a_files) > 0 and len(c_files) > 0:
+                    return a_dir, c_dir, a_files, c_files
+
+    return None, None, [], []
+
 def get_or_create_split(data_dir=Config.DATA_DIR, split_file=Config.SPLIT_FILE, test_size=Config.TEST_SPLIT_RATIO, seed=Config.SEED):
     """
-    Scans dataset directory, checks if split_indices.pkl exists;
-    if not, creates stratified 80/20 train/test split and saves it.
+    Locates dataset slices, checks if split_indices.pkl exists;
+    re-maps filenames across OS/platforms or creates fresh stratified 80/20 split.
     """
+    autistic_dir, control_dir, autistic_files, control_files = locate_dataset_dirs(data_dir)
+
+    if not autistic_files or not control_files:
+        raise FileNotFoundError(
+            f"Could not locate dataset slices (*.nii or *.nii.gz).\n"
+            f"Searched: '{data_dir}', '/kaggle/input', and repository directories.\n"
+            f"Please make sure your dataset is attached to your Kaggle session!"
+        )
+
+    print(f"[INFO] Found dataset at: {os.path.dirname(autistic_dir)}")
+    print(f"[INFO] Autistic: {len(autistic_files)} | Typical_Control: {len(control_files)} | Total: {len(autistic_files)+len(control_files)}")
+
+    # Check if existing split can be used
     if os.path.exists(split_file):
         try:
             with open(split_file, "rb") as f:
                 split_data = pickle.load(f)
+            # 1. Direct path check
             if split_data.get("train_files") and os.path.exists(split_data["train_files"][0]):
                 print(f"[INFO] Loading existing train/test split from {split_file}")
                 return split_data
+
+            # 2. Re-map filenames to discovered directory across OS
+            all_discovered = {os.path.basename(p): p for p in (autistic_files + control_files)}
+            remapped_train = [all_discovered.get(os.path.basename(p)) for p in split_data.get("train_files", [])]
+            remapped_test = [all_discovered.get(os.path.basename(p)) for p in split_data.get("test_files", [])]
+
+            if all(remapped_train) and all(remapped_test):
+                split_data["train_files"] = remapped_train
+                split_data["test_files"] = remapped_test
+                print(f"[INFO] Re-mapped {len(remapped_train)} train and {len(remapped_test)} test slices from {split_file} to current OS paths.")
+                return split_data
             else:
-                print(f"[WARN] Paths in {split_file} do not exist on this OS. Creating fresh split.")
-        except Exception:
-            pass
+                print(f"[WARN] Filenames in {split_file} differ from discovered files. Creating fresh split.")
+        except Exception as e:
+            print(f"[WARN] Error reading {split_file}: {e}. Creating fresh split.")
 
     print("[INFO] Creating fresh stratified train/test split...")
-    autistic_dir = os.path.join(data_dir, "Autistic")
-    control_dir = os.path.join(data_dir, "Typical_Control")
-
-    autistic_files = sorted(glob.glob(os.path.join(autistic_dir, "*.nii")))
-    control_files = sorted(glob.glob(os.path.join(control_dir, "*.nii")))
-
-    print(f"[INFO] Found {len(autistic_files)} Autistic and {len(control_files)} Typical Control slices.")
-
     all_files = autistic_files + control_files
-    # Label: 1 for Autistic, 0 for Typical_Control
     all_labels = [1] * len(autistic_files) + [0] * len(control_files)
 
     train_files, test_files, train_labels, test_labels = train_test_split(
