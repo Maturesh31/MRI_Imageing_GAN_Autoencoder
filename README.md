@@ -37,6 +37,8 @@ The study systematically evaluates the individual and combined impact of GAN-bas
 ## Project Structure
 
 ```text
+├── ablation_study_all_in_one.ipynb # All-in-one GPU-accelerated notebook for Kaggle/Colab
+├── build_notebook.py           # Generator script for ablation_study_all_in_one.ipynb
 ├── cnn_model.py                # 2D SimpleCNN architecture definition
 ├── gan_model.py                # Conditional Generator & Discriminator for sMRI synthesis
 ├── ae_model.py                 # Convolutional Autoencoder for image enhancement
@@ -63,7 +65,19 @@ The study systematically evaluates the individual and combined impact of GAN-bas
 pip install -r requirements.txt
 ```
 
-### 2. Run Experiments
+### 2. All-in-One GPU Execution (Kaggle / Colab)
+Upload `ablation_study_all_in_one.ipynb` directly to Kaggle (GPU T4 ×2) or Google Colab (T4 GPU). It features:
+- SE (Squeeze-and-Excitation) attention modules
+- Online data augmentation & Mixup training
+- Label smoothing & Youden's J threshold optimization
+- Full E0–E3 pipeline training in ~15–20 minutes
+
+To regenerate the notebook:
+```bash
+python build_notebook.py
+```
+
+### 3. Run Standalone Experiments (Local)
 ```bash
 # E0: Baseline CNN
 python train_e0_baseline.py --epochs 25
@@ -78,7 +92,7 @@ python train_e2_ae.py --ae_epochs 6 --cnn_epochs 15
 python train_e3_combined.py --cnn_epochs 15 --aug_samples 400
 ```
 
-### 3. Generate Visual Predictions
+### 4. Generate Visual Predictions
 ```bash
 python visualize_predictions.py
 ```
