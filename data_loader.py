@@ -68,10 +68,16 @@ def get_or_create_split(data_dir=Config.DATA_DIR, split_file=Config.SPLIT_FILE, 
     if not, creates stratified 80/20 train/test split and saves it.
     """
     if os.path.exists(split_file):
-        print(f"[INFO] Loading existing train/test split from {split_file}")
-        with open(split_file, "rb") as f:
-            split_data = pickle.load(f)
-        return split_data
+        try:
+            with open(split_file, "rb") as f:
+                split_data = pickle.load(f)
+            if split_data.get("train_files") and os.path.exists(split_data["train_files"][0]):
+                print(f"[INFO] Loading existing train/test split from {split_file}")
+                return split_data
+            else:
+                print(f"[WARN] Paths in {split_file} do not exist on this OS. Creating fresh split.")
+        except Exception:
+            pass
 
     print("[INFO] Creating fresh stratified train/test split...")
     autistic_dir = os.path.join(data_dir, "Autistic")
